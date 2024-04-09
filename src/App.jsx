@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
@@ -7,29 +7,57 @@ import "./assets/style.css";
 
 function App() {
   const [recipes, setRecipes] = useState([]);
+  const [editingRecipeId, setEditingRecipeId] = useState(null);
+
   useEffect(() => {
-    fetch("https://api.sampleapis.com/recipes/recipes")
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("https://api.sampleapis.com/recipes/recipes");
+        const data = await response.json();
         setRecipes(data);
-      });
-    return () => console.log("unmounted");
+      } catch (error) {
+        console.error("Error fetching recipes:", error);
+      }
+    };
+    fetchData();
   }, []);
-  function filterRecipesComputeIntensive(recipes) {
-    const now = performance.now();
-    while (performance.now() - now < 8000) {
-      //spin()
-    }
-    return list.filter((word) => word.name.split(" ").length <= 4);
-  }
-  const filteredRecipes = filterRecipesComputeIntensive(recipes);
+
+  const handleEdit = (recipeId) => {
+    setEditingRecipeId(recipeId);
+  };
+
+  const handleSave = (updatedRecipe) => {
+    const updatedRecipes = recipes.map((recipe) =>
+      recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+    );
+    setRecipes(updatedRecipes);
+    setEditingRecipeId(null);
+  };
+
+  const handleDelete = (recipeId) => {
+    const updatedRecipes = recipes.filter((recipe) => recipe.id !== recipeId);
+    setRecipes(updatedRecipes);
+  };
+
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <>
-      <Navbar />
-      {recipes.map((data) => (
-        <RecipeContainer recipe={data} key={data.id} />
+      <Navbar scrollToBottom={scrollToBottom} />
+      {recipes.map((recipe) => (
+        <RecipeContainer
+          key={recipe.id}
+          recipe={recipe}
+          editing={editingRecipeId === recipe.id}
+          onEdit={handleEdit}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        />
       ))}
       <Footer />
     </>
@@ -37,3 +65,4 @@ function App() {
 }
 
 export default App;
+
